@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Automatic Plant Watering System</title>
+
+<style>
+body { font-family: Arial; margin: 0; padding: 20px; background: #f4f4f4; }
+header { background: #333; color: white; padding: 1rem; text-align: center; }
+section { background: #b3dfbb; padding: 20px; margin-top: 10px; border-radius: 8px; }
+
+button {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+button:hover { background: #1b5e20; }
+
+input { width: 80px; }
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Automatic Plant Watering System</h1>
+</header>
+
+<section>
+
+<h2>About</h2>
+
+<p>
+Check up on your plant health using this website! It is linked to your automatic plant watering system
+</p>
+
+<p><strong>Server Status:</strong> <span id="status">...</span></p>
+<p><strong>Soil Moisture:</strong> <span id="moisture">—</span></p>
+<p><strong>Last Watered:</strong> <span id="lastWatered">—</span></p>
+
+<p><strong>Soil Moisture Guide:</strong></p>
+<ul>
+<li>300–450 → Very wet</li>
+<li>450–600 → Ideal (Spider plant 🌿)</li>
+<li>600–800 → Dry</li>
+<li>1023 → Error</li>
+</ul>
+
+<p>
+Min: <input id="min" type="number" value="400">
+Max: <input id="max" type="number" value="600">
+<button onclick="saveRange()">Save</button>
+</p>
+
+<button onclick="waterPlant()">💧 Water Plant</button>
+<p id="msg"></p>
+
+</section>
+
+<script>
+
+async function checkStatus() {
+    try {
+        const res = await fetch('/data');
+        const data = await res.json();
+
+        document.getElementById("status").innerText =
+            data.connected ? "Connected ✔" : "Disconnected ❌";
+
+        document.getElementById("moisture").innerText =
+            data.sensor ?? "—";
+
+        document.getElementById("lastWatered").innerText =
+            data.last_watered ?? "Never";
+
+    } catch (err) {
+        console.log("Frontend error:", err);
+    }
+}
+
+async function saveRange() {
+    await fetch('/set_range', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            min: document.getElementById("min").value,
+            max: document.getElementById("max").value
+        })
+    });
+}
+
+async function waterPlant() {
+    const res = await fetch('/water', { method: 'POST' });
+    const data = await res.json();
+
+    document.getElementById("msg").innerText =
+        data.success ? "Watered ✔" : "Error ❌";
+}
+
+setInterval(checkStatus, 3000);
+checkStatus();
+
+</script>
+
+</body>
+</html>
